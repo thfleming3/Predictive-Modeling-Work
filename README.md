@@ -1,4 +1,4 @@
-# Predictive-Modeling-Work
+# predictive-modeling-work
 
 Hi! I'm Tom Fleming and the purpose of this repository is to share some of the predictive modeling work I have completed recently. I plan on updating it occasionally, as I enhance or complete more work.
 
