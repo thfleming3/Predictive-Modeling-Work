@@ -7,4 +7,4 @@ Here is a list of programs in the repo, along with brief descriptions.
 
 predict_home_price.ipynb
 
-Linear Regression: Data cleaning and transformation and model build and evaluation using CSV of data on 21,613 houses in the Seattle, Washington metropolitan area. In this exercise, I am attempting to predict housing price for this population. 
+Linear Regression: Data cleaning, data transformation, model build, and model evaluation using a CSV of data on 21,613 houses in the Seattle, Washington metropolitan area. In this exercise, I am attempting to predict housing price for this population. 
