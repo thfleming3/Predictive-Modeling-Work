@@ -80,7 +80,7 @@ def elim_infl_outliers(data_label, X, y):
     leverage = influence.hat_matrix_diag
     
     # Plot leverage vs. studentized residuals
-    sns.regplot(leverage, lm.resid_pearson, fit_reg=False)
+    plt.scatter(leverage, lm.resid_pearson)
     plt.title(f"Leverage vs. Studentized Residuals - {data_label} Dataset")
     plt.xlabel("Leverage")
     plt.ylabel("Studentized Residuals")
