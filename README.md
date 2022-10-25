@@ -11,4 +11,4 @@ Linear Regression: Data cleaning, data transformation, model build, and model ev
 
 predict_credit_card_default.ipynb
 
-Logistic Regression: Data cleaning, data transformation, model build, and model evaluation using an Excel sheet of data on 30,000 credit card holders. In this exercise, I am attempting to predict whether or not a borrower will default for this population. The input dataset is also included in the repo as "Credit Card Defaulter Prediction.xlsx" as well as a script of custom functions called toms_custom_functions.py, which I draw upon during this exercise.
+Logistic Regression: Data cleaning, data transformation, model build, and model evaluation using an Excel sheet of data on 30,000 credit card holders. In this exercise, I am attempting to predict whether or not a borrower will default for this population. The input dataset is also included in the repo as "Credit Card Defaulter Prediction.csv" as well as a script of custom functions called toms_custom_functions.py, which I draw upon during this exercise.
