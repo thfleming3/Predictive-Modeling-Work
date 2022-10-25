@@ -102,3 +102,36 @@ def elim_infl_outliers(data_label, X, y):
     # Drop observations from X and y that are influential outliers
     X.drop(influential_idx, inplace=True)
     y.drop(influential_idx, inplace=True)
+    
+def factorize_objects(df):
+    ''' Convert series with object datatype into factors '''
+    # Get all object variables
+    obj_vars = df.select_dtypes(include=['object']).columns.tolist()
+    
+    for var in obj_vars:
+        # Get variable values
+        var_values = df[var].to_list()
+        
+        # Factorize variable values
+        var_factors = pd.factorize(var_values)[0]
+        
+        # Drop the original variable column
+        df.drop(columns=[var], inplace=True)
+        
+        # Create a new, factorized variable column of the same name
+        df[var] = var_factors
+      
+def make_dates_useable(df):
+    # Change date data types to int
+    dt_vars = df.select_dtypes(include=['datetime64[ns]']).columns.tolist()
+    print(f"The datetime64[ns] variables in {df} are {dt_vars}")
+    
+    for var in dt_vars:
+        df[var] = df[var].map(dt.datetime.toordinal)
+        
+def create_dummies(df, var, prefix):
+    zip_dummies = pd.get_dummies(df[var], prefix=prefix, drop_first=True)
+    zip_list = zip_dummies.columns.tolist()
+    for col in zip_list:
+        df[col] = zip_dummies[col]
+    df.drop(columns=[var], inplace=True)
