@@ -13,6 +13,21 @@ from sklearn.metrics import confusion_matrix, accuracy_score, recall_score, prec
 
 # Create function to fit linear regression model and visualize relationships
 def show_plots(X, y):
+    """
+    Description
+    -----------
+    1) Fits a regression model with Scikit-Learn
+    2) Creates a scatterplot of residuals against fitted values for a training set
+    3) Creates a scatterplot of a field called date against residuals for a training set
+    4) Creates a scatterplot of fitted values against each predictor variable
+    
+    Parameters
+    ----------
+    X : pandas.DataFrame
+        A design matrix
+    y : pandas.Series
+        A vector of true values for the response variable
+    """
     
     # Fit model, get fitted values, and calculate residual
     lm = LinearRegression()
@@ -42,25 +57,68 @@ def show_plots(X, y):
         
 # Create function for logging predictor
 def log_predictor(df, var, zeros='increment'):
+    """
+    Description
+    -----------
+    Deals with zero values, logs the variable, and drops the original column
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        A dataframe containing the variable you want to log
+    var : str
+        The variable you want to log
+    zeros : str
+        Indicates how to deal with zeros, by either incrementing them by .01 or replacing them with NaN (default is 'increment')
+        
+    Raises
+    ------
+    Exception
+        If a method (increment or replace_w_nan) is not specified for how to deal with zero values, an exception will be thrown
+    """
+    
     if zeros == 'increment':
         df[var] = df[var].apply(lambda x: max(x, .01))
-        df[f"log_{var}"] = np.log(df[var])
-        df.drop(columns=[var], inplace=True)
     elif zeros == 'replace_w_nan':
         df[var].replace(0, np.nan, inplace=True)
-        df[f"log_{var}"] = np.log(df[var])
-        df.drop(columns=[var], inplace=True)
     else:
         raise Exception("How to deal with zeros is not specified.")
+    
+    df[f"log_{var}"] = np.log(df[var])
+    df.drop(columns=[var], inplace=True)
 
 # Fit model and output summary
 def fit_model(X, y):
+    """
+    Parameters
+    ----------
+    X : pandas.DataFrame
+        A design matrix
+    y : pandas.Series
+        A vector of true values for the response variable
+    """
+    
     X_cnst = sm.add_constant(X)
     lm = sm.OLS(y, X_cnst).fit()
     print(lm.summary())
 
 # Calculate VIF
 def calculate_vif(df, threshold):
+    """
+    Description
+    -----------
+    1) Calculate variable inflation factor on fields in a dataframe
+    2) Sort them in descending order
+    3) Filter the dataframe of VIF values for ones higher than the specified threshold
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        A dataframe of values you want to calculate VIF for
+    threshold : int
+        An integer specifying the non-inclusive lower bound, all values above which are considered high VIF
+    """
+    
     vif = pd.DataFrame()
     vif["variables"] = df.columns
     vif["VIF"] = [variance_inflation_factor(df.values, i) for i in range(df.shape[1])]
@@ -70,10 +128,42 @@ def calculate_vif(df, threshold):
     
 # Create interactions
 def create_interactions(df, var1, var2):
+    """
+    Description
+    -----------
+    Create an interaction variable from two pre-existing variables
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe containing the variables you want to create an interaction out of
+    var1 : pandas.Series
+        One variable in the interaction
+    var2 : pandas.Series
+        The other variable in the interaction
+    """
+    
     df[f"{var1}:{var2}"] = df[var1] * df[var2]
 
-# Function for eliminating influential outliers
+# Function for eliminating influence outliers
 def elim_infl_outliers(data_label, X, y):
+    """
+    Description
+    -----------
+    1) Fit an OLS model
+    2) Get dataframe of influential measures
+    3) Identify and remove influential outliers
+    
+    Parameters
+    ----------
+    data_label : str
+        The label describing for which dataset influential outliers are being eliminated
+    X : pandas.Series
+        A design matrix
+    y : pandas.Series
+        A vector of true values for the response variable
+    """
+    
     # Fit model
     X_cnst = sm.add_constant(X)
     lm = sm.OLS(y, X).fit()
@@ -112,7 +202,17 @@ def elim_infl_outliers(data_label, X, y):
     y.drop(influential_idx, inplace=True)
     
 def factorize_objects(df):
-    ''' Convert series with object datatype into factors '''
+    """
+    Description
+    -----------
+    Turn dataframe columns of type object into factors (does not specify order)
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe containing the columns you want factorized
+    """
+    
     # Get all object variables
     obj_vars = df.select_dtypes(include=['object']).columns.tolist()
     
@@ -130,6 +230,17 @@ def factorize_objects(df):
         df[var] = var_factors
       
 def make_dates_useable(df):
+    """
+    Description
+    -----------
+    Turns dataframe columns of object type 'datetime64[ns]' into ordinal columns
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe containing the date columns you want converted to ordinal
+    """
+    
     # Change date data types to int
     dt_vars = df.select_dtypes(include=['datetime64[ns]']).columns.tolist()
     print(f"The datetime64[ns] variables in {df} are {dt_vars}")
@@ -138,6 +249,21 @@ def make_dates_useable(df):
         df[var] = df[var].map(dt.datetime.toordinal)
         
 def create_dummies(df, var, prefix=""):
+    """
+    Description
+    -----------
+    Creates dummy variables from a specified column, then drops the original column
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe containing the columns you want to create dummies out of
+    var : str
+        The name of the column you want to create dummy variables for
+    prefix : str
+        The prefix you want to append to all dummy variables created in this function call (defaults to blank)
+    """
+    
     if prefix == "":
         prefix = var
     zip_dummies = pd.get_dummies(df[var], prefix=prefix, drop_first=True)
@@ -146,18 +272,29 @@ def create_dummies(df, var, prefix=""):
         df[col] = zip_dummies[col]
     df.drop(columns=[var], inplace=True)
     
-# def create_ordered_factors(df, var, order):
-#     for i, item in enumerate(order):
-#         df[var].replace(item, f"{i + 1}_{item}", inplace=True)
-    
-#     df[var].rename(str.lower, axis="columns", inplace=True)
-#     df[var].columns.str.replace(' ', '_')
-#     codes, uniques = pd.factorize(df[var], sort=True)
-#     print(f"Codes: {codes}")
-#     print(f"Unique values: {uniques}")
-#     df[var] = codes
-    
 def plot_log_odds(X, y):
+    """
+    Description
+    -----------
+    1) Fit a logistic regression model
+    2) Get fitted values
+    3) Calculate log-odds
+    4) Plot each variable against log-odds
+    
+    Parameters
+    ----------
+    X : pandas.DataFrame
+        A design matrix
+    y : pandas.Series
+        A vector of true values for a response variable
+        
+    Returns
+    -------
+    lm_num
+        Fitted model from sm.GLM
+    X_cnst
+        The design matrix, with intercept added, from the model
+    """
     
     # Add constant
     X_cnst = sm.add_constant(X)
@@ -179,6 +316,23 @@ def plot_log_odds(X, y):
     return lm_num, X_cnst
         
 def get_model_summary(X, y, family=sm.families.Binomial(), missing="drop"):
+    """
+    Description
+    -----------
+    Fit a model using sm.GLM and get its summary output
+    
+    Parameters
+    ----------
+    X : pandas.DataFrame
+        A design matrix
+    y : pandas.Series
+        A vector of true values for a response variable
+    family : statsmodels.genmod.families.family.
+        A model family from the statsmodels package (defaults to sm.families.Binomial())
+    missing : str
+        Indicates whether to drop missing values when fitting the model (defaults to "drop")
+    """
+    
     X_num = sm.add_constant(X)
     
     # Set up final dfs and fit model
@@ -187,6 +341,19 @@ def get_model_summary(X, y, family=sm.families.Binomial(), missing="drop"):
     print(lm_final.summary())
     
 def plot_confusion_matrix(y_test, predictions):
+    """
+    Description
+    -----------
+    1) Generate, format, and output confusion matrix
+    2) Report on performance measures
+    
+    Parameters
+    ----------
+    y_test : pandas.Series
+        A vector of true values for a response variable in a test set
+    predictions : pandas.Series
+        A vector of fitted values for a response variable in a test set
+    """
     
     #Generate confusion matrix
     cf_matrix = confusion_matrix(y_test, predictions)
