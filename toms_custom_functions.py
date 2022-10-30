@@ -9,6 +9,7 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 from statsmodels.formula.api import ols
 from sklearn.linear_model import LinearRegression
 import seaborn as sns
+from sklearn.metrics import confusion_matrix, accuracy_score, recall_score, precision_score, f1_score
 
 # Create function to fit linear regression model and visualize relationships
 def show_plots(X, y):
@@ -40,10 +41,17 @@ def show_plots(X, y):
         plt.show()
         
 # Create function for logging predictor
-def log_predictor(df, var):
-    df[var] = df[var].apply(lambda x: max(x, .01))
-    df[f"log_{var}"] = np.log(df[var])
-    df.drop(columns=[var], inplace=True)
+def log_predictor(df, var, zeros='increment'):
+    if zeros == 'increment':
+        df[var] = df[var].apply(lambda x: max(x, .01))
+        df[f"log_{var}"] = np.log(df[var])
+        df.drop(columns=[var], inplace=True)
+    elif zeros == 'replace_w_nan':
+        df[var].replace(0, np.nan, inplace=True)
+        df[f"log_{var}"] = np.log(df[var])
+        df.drop(columns=[var], inplace=True)
+    else:
+        raise Exception("How to deal with zeros is not specified.")
 
 # Fit model and output summary
 def fit_model(X, y):
@@ -129,9 +137,79 @@ def make_dates_useable(df):
     for var in dt_vars:
         df[var] = df[var].map(dt.datetime.toordinal)
         
-def create_dummies(df, var, prefix):
+def create_dummies(df, var, prefix=""):
+    if prefix == "":
+        prefix = var
     zip_dummies = pd.get_dummies(df[var], prefix=prefix, drop_first=True)
     zip_list = zip_dummies.columns.tolist()
     for col in zip_list:
         df[col] = zip_dummies[col]
     df.drop(columns=[var], inplace=True)
+    
+# def create_ordered_factors(df, var, order):
+#     for i, item in enumerate(order):
+#         df[var].replace(item, f"{i + 1}_{item}", inplace=True)
+    
+#     df[var].rename(str.lower, axis="columns", inplace=True)
+#     df[var].columns.str.replace(' ', '_')
+#     codes, uniques = pd.factorize(df[var], sort=True)
+#     print(f"Codes: {codes}")
+#     print(f"Unique values: {uniques}")
+#     df[var] = codes
+    
+def plot_log_odds(X, y):
+    
+    # Add constant
+    X_cnst = sm.add_constant(X)
+    
+    # Fit model and get predicted y values
+    lm_num = sm.GLM(y, X_cnst, family=sm.families.Binomial(), missing="drop").fit()
+    predicted = lm_num.predict(X_cnst)
+    
+    # Calculated log-odds and add it to X_num
+    log_odds = np.log(predicted / (1 - predicted))
+    
+    # Create plots of each predictor vs. log-odds
+    for var in X_cnst.columns.values:
+        plt.scatter(x=X_cnst[var].values, y=log_odds)
+        plt.xlabel(var)
+        plt.ylabel("log-odds")
+        plt.show()
+        
+    return lm_num, X_cnst
+        
+def get_model_summary(X, y, family=sm.families.Binomial(), missing="drop"):
+    X_num = sm.add_constant(X)
+    
+    # Set up final dfs and fit model
+    lm_final = sm.GLM(y, X_num, family=family, missing=missing).fit()
+    
+    print(lm_final.summary())
+    
+def plot_confusion_matrix(y_test, predictions):
+    
+    #Generate confusion matrix
+    cf_matrix = confusion_matrix(y_test, predictions)
+    
+    # Create labels
+    group_names = ["True Neg","False Pos","False Neg","True Pos"]
+    group_counts = ["{0:0.0f}".format(value) for value in
+                cf_matrix.flatten()]
+    group_percentages = ["{0:.2%}".format(value) for value in
+                     cf_matrix.flatten()/np.sum(cf_matrix)]
+    labels = [f"{v1}\n{v2}\n{v3}" for v1, v2, v3 in
+          zip(group_names,group_counts,group_percentages)]
+    labels = np.asarray(labels).reshape(2,2)
+    
+    # Plot confusion matrix
+    sns.heatmap(cf_matrix, annot=labels, fmt='', cmap='Blues')
+    
+    # Get accuracy score, recall, precision, and F1 score
+    acc_score = "{0:.2%}".format(accuracy_score(y_test, predictions))
+    recall = "{0:.2%}".format(recall_score(y_test, predictions))
+    precision = "{0:.2%}".format(precision_score(y_test, predictions))
+    f1 = "{0:.2%}".format(f1_score(y_test, predictions))
+    print(f"Accuracy score: {acc_score}")
+    print(f"Recall: {recall}")
+    print(f"Precision: {precision}")
+    print(f"F1 Score: {f1}")
